@@ -8,6 +8,8 @@
 ●	Graphviz — инструмент для визуализации кода.  
 Команда установки: `sudo apt install clang llvm`  
 
+![1](https://github.com/user-attachments/assets/386a87fe-5559-4a5c-a620-bf94858c78a5)  
+
 ### 2.	Исходный код  
 Программа на языке C:  
 #include <stdio.h>
