@@ -182,7 +182,7 @@ int main() {
 
 `call void @llvm.memcpy.p0i8.p0i8.i64(
   i8* %3,                     ;
-  i8* getelementptr @__const.main.msg, ; откуда (строка "Hello")
+  i8* getelementptr @__const.main.msg, ;
   i64 6,                      ;
   i1 false
 )`  
