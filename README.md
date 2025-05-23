@@ -1,5 +1,5 @@
-## Ход работы
-1.	Установка и подготовка среды  
+# Ход работы
+### 1.	Установка и подготовка среды  
 Работа выполнялась в среде Ubuntu 22.04.  
 Установлены следующие инструменты:  
 ●	 clang — компилятор языка C/C++;  
@@ -8,93 +8,94 @@
 ●	Graphviz — инструмент для визуализации кода.  
 Команда установки: `sudo apt install clang llvm`  
 
-3.	Исходный код  
-Программа на языке C: #include <stdio.h>  
+### 2.	Исходный код  
+Программа на языке C:  
+#include <stdio.h>
 int square(int x) { return x * x;
 }
 int main() {
  
 int a = 5;
 int b = square(a); printf("%d\n", b); return 0;
-}
-Сохранена в файл main.c.
+}  
+Сохранена в файл main.c.  
 
-![2](https://github.com/user-attachments/assets/bbe533b0-d601-404e-9320-0c92def26b33)
+![2](https://github.com/user-attachments/assets/bbe533b0-d601-404e-9320-0c92def26b33)  
 
-3.	Получение AST
-Команда: `clang -Xclang -ast-dump -fsyntax-only main.c`
+### 3.	Получение AST  
+Команда: `clang -Xclang -ast-dump -fsyntax-only main.c`  
 
-![3(2)](https://github.com/user-attachments/assets/3cae1821-40c0-40ae-b308-d58d161095a4)
+![3(2)](https://github.com/user-attachments/assets/3cae1821-40c0-40ae-b308-d58d161095a4)  
 
-Функция square принята, содержит параметр x и возвращает x * x.
+Функция square принята, содержит параметр x и возвращает x * x.  
 
-4.	Генерация LLVM IR
-Команда: `clang -S -emit-llvm main.c -o main.ll`
+### 4.	Генерация LLVM IR  
+Команда: `clang -S -emit-llvm main.c -o main.ll`  
 
-![4](https://github.com/user-attachments/assets/7340f050-0883-4d7b-9d03-bc61f51002fe)
+![4](https://github.com/user-attachments/assets/7340f050-0883-4d7b-9d03-bc61f51002fe)  
 
-5.	Оптимизация IR
-Команда: `clang -O0 -S -emit-llvm main.c -o main_O0.ll`
-Стоит отметить, что в файле с IR до оптимизации:
-Все переменные (a, b, x.addr) размещены в памяти через alloca; Множество операций load и store;
-square вызывается как отдельная функция.
+### 5.	Оптимизация IR  
+Команда: `clang -O0 -S -emit-llvm main.c -o main_O0.ll`  
+Стоит отметить, что в файле с IR до оптимизации:  
+Все переменные (a, b, x.addr) размещены в памяти через alloca;  
+Множество операций load и store;  
+square вызывается как отдельная функция.  
 
-![5](https://github.com/user-attachments/assets/e2ab5ba7-0844-4712-9142-3a03fdbfa6f8)
+![5](https://github.com/user-attachments/assets/e2ab5ba7-0844-4712-9142-3a03fdbfa6f8)  
 
-Команда: `clang -O2 -S -emit-llvm main.c -o main_O2.ll`
+Команда: `clang -O2 -S -emit-llvm main.c -o main_O2.ll`  
  
-Команда -O2 – комплексная оптимизация среднего уровня. Она применяет более 30 различных оптимизаций:
-●	-inline – встраивание небольших функций (встраивает square в main, если она вызывается один раз);
-●	-constprop – подставит значение square(5) → 25, если функция встроена и всё известно на этапе компиляции;
-●	-mem2reg – перевод переменных из памяти в регистры (SSA);
-●	-instcombine – объединение и упрощение инструкций (упростит арифметику, например x * x может быть преобразовано в shl при x = 2^n);
-●	-simplifycfg – оптимизирует структуру блоков (Упростит граф управления, если после inlining останутся лишние блоки);
-●	-reassociate, -gvn, -sroa, -dce и другие. 
-В файле с IR после оптимизации:
-Вся функция square исчезла – она была встроена (-inline) и затем вычислена (оптимизация -constprop);
-Никаких переменных, alloca, store, load – всё удалено (оптимизации
--mem2reg, -dce);
-Остался только вызов printf(25).
+Команда -O2 – комплексная оптимизация среднего уровня. Она применяет более 30 различных оптимизаций:  
+●	-inline – встраивание небольших функций (встраивает square в main, если она вызывается один раз);  
+●	-constprop – подставит значение square(5) → 25, если функция встроена и всё известно на этапе компиляции;  
+●	-mem2reg – перевод переменных из памяти в регистры (SSA);  
+●	-instcombine – объединение и упрощение инструкций (упростит арифметику, например x * x может быть преобразовано в shl при x = 2^n);  
+●	-simplifycfg – оптимизирует структуру блоков (Упростит граф управления, если после inlining останутся лишние блоки);  
+●	-reassociate, -gvn, -sroa, -dce и другие.  
+В файле с IR после оптимизации:  
+Вся функция square исчезла – она была встроена (-inline) и затем вычислена (оптимизация -constprop);  
+Никаких переменных, alloca, store, load – всё удалено (оптимизации -mem2reg, -dce);  
+Остался только вызов printf(25).  
 
-![5(2)](https://github.com/user-attachments/assets/73172830-9f3f-42a9-af26-7f106d9b9fd8)
+![5(2)](https://github.com/user-attachments/assets/73172830-9f3f-42a9-af26-7f106d9b9fd8)  
 
-Команда: `diff main_O0.ll main_O2.ll`
-Сравнение двух файлов:
+Команда: `diff main_O0.ll main_O2.ll`  
+Сравнение двух файлов:  
  
-![5(3)](https://github.com/user-attachments/assets/32d1ab79-a333-4ccd-9e59-fe22a63576b8)
+![5(3)](https://github.com/user-attachments/assets/32d1ab79-a333-4ccd-9e59-fe22a63576b8)  
 
-![5(3_2)](https://github.com/user-attachments/assets/9fdbfdbc-0573-4329-973e-9cd80f4452cc)
+![5(3_2)](https://github.com/user-attachments/assets/9fdbfdbc-0573-4329-973e-9cd80f4452cc)  
 
-Стоит отметить, что после оптимизации произошли следующие изменения:
-●	Переменные типа alloca были удалены;
-●	Код переведён в SSA-форму;
-●	Оптимизация	улучшила	читаемость	и	упростила	поток управления.
+Стоит отметить, что после оптимизации произошли следующие изменения:  
+●	Переменные типа alloca были удалены;  
+●	Код переведён в SSA-форму;  
+●	Оптимизация	улучшила	читаемость	и	упростила	поток управления.  
 
-6.	Граф потока управления программы
-Команда для генерации оптимизированного LLVM IR: `clang -O2 -S -emit-llvm main.c -o main.ll`
-Команда для генерации .dot-файлов CFG для функций: `opt -dot-cfg -disable-output main.ll`
+### 6.	Граф потока управления программы  
+Команда для генерации оптимизированного LLVM IR: `clang -O2 -S -emit-llvm main.c -o main.ll`  
+Команда для генерации .dot-файлов CFG для функций: `opt -dot-cfg -disable-output main.ll`  
 
-Эта команда создаст DOT-файлы: 
-.main.dot – для функции main;
-.square.dot – для square, если она не была удалена оптимизацией.
-Команда для установки библиотеки Graphviz: `sudo apt install graphviz`
+Эта команда создаст DOT-файлы:   
+.main.dot – для функции main;  
+.square.dot – для square, если она не была удалена оптимизацией.  
+Команда для установки библиотеки Graphviz: `sudo apt install graphviz`  
  
-Команды для преобразования файлов с расширением .dot в .png с помощью Graphviz: `dot -Tpng .main.dot -o cfg_main.png dot -Tpng .square.dot -o cfg_square.png`
-Команды для просмотра файлов с CGF:
-`xdg-open cfg_main.png`
+Команды для преобразования файлов с расширением .dot в .png с помощью Graphviz: `dot -Tpng .main.dot -o cfg_main.png dot -Tpng .square.dot -o cfg_square.png`  
+Команды для просмотра файлов с CGF:  
+`xdg-open cfg_main.png`  
 
-![6](https://github.com/user-attachments/assets/13320ed1-7308-4e83-8690-d9358ac3dda4)
+![6](https://github.com/user-attachments/assets/13320ed1-7308-4e83-8690-d9358ac3dda4)  
 
-`xdg-open cfg_square.png`
+`xdg-open cfg_square.png`  
 
-![7](https://github.com/user-attachments/assets/a602ef46-f393-4572-ad11-714b3f61b39d)
+![7](https://github.com/user-attachments/assets/a602ef46-f393-4572-ad11-714b3f61b39d)  
 
-Стоит отметить, что в LLVM каждый граф потока управления (CFG) строится на уровне функции, поскольку структура управления всегда локальна для тела функции. Для получения полного представления о программе, нужно построить CFG для всех функций и анализировать их совокупность. Автоматическое объединение всех CFG в один граф не предусмотрено в LLVM по умолчанию.
+Стоит отметить, что в LLVM каждый граф потока управления (CFG) строится на уровне функции, поскольку структура управления всегда локальна для тела функции. Для получения полного представления о программе, нужно построить CFG для всех функций и анализировать их совокупность. Автоматическое объединение всех CFG в один граф не предусмотрено в LLVM по умолчанию.  
 
-# Выводы
-●	С помощью Clang можно получить полную структуру AST и IR, а также CGF;
-●	LLVM	предоставляет	гибкие	инструменты	анализа	и оптимизации;
-●	Промежуточное представление кода удобно для написания компиляторных трансформаций.
+# Выводы  
+●	С помощью Clang можно получить полную структуру AST и IR, а также CGF;  
+●	LLVM	предоставляет	гибкие	инструменты	анализа	и оптимизации;  
+●	Промежуточное представление кода удобно для написания компиляторных трансформаций.  
 
 
 
